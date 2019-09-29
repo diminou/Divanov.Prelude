@@ -1,6 +1,9 @@
 module Divanov.Prelude
 
+
 module Async =
+    type Cts = System.Threading.CancellationTokenSource
+    type Ct = System.Threading.CancellationToken
     type Lock () =
         let mutable trigger = 0
         member __.Acquire (): bool =
@@ -11,23 +14,27 @@ module Async =
             else false
 
     let race (a1: Async<'T>) (a2: Async<'T>): Async<'T> =
-        let source1 = new System.Threading.CancellationTokenSource ()
-        let source2 = new System.Threading.CancellationTokenSource ()
-        let token1 = source1.Token
-        let token2 = source2.Token
-        let lock = Lock ()
-        async {
+        Async.FromContinuations( fun (cont, excont, cancont) ->
             let mutable result: 'T option = None
-            let canceling (a: Async<'T>, cs: System.Threading.CancellationTokenSource): Async<unit> =
+            let source1 = new Cts ()
+            let source2 = new Cts ()
+            let token1 = source1.Token
+            let token2 = source2.Token
+            let lock = Lock ()
+            let update (res: 'T) =
+                lock.RunOnce(fun () -> result <- Some res)
+            let canceling (source: Cts, a: Async<'T>) =
                 async {
-                    if lock.RunOnce (fun () -> result <- Some <| Async.RunSynchronously a)
-                    then return cs.Cancel ()
+                    let! res = a
+                    if update res
+                    then
+                        source.Cancel()
+                        return cont (Option.get result)
                     else return ()
                 }
-            let asyncs = [(canceling (a1, source2), token1); (canceling (a2, source1), token2)]
-            List.iter (fun (comp, tok) -> Async.Start(comp, tok)) asyncs
-            return Option.get result
-        }
+            [ ((source2, a1), token1); ((source1, a2), token2) ]
+            |> List.iter (fun (ctuple, t) -> Async.Start (canceling ctuple, t))
+        )
 
     let raceMany (l: List<Async<'T>>): Async<'T> =
         List.reduce race l

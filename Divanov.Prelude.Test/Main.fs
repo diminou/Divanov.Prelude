@@ -1,6 +1,6 @@
-﻿module Divanov.Prelude.Test
+﻿module Divanov.Prelude.Test.Main
 open Expecto
 
 [<EntryPoint>]
 let main argv =
-    Tests.runTestsInAssembly defaultConfig argv
+    runTestsInAssembly defaultConfig argv
