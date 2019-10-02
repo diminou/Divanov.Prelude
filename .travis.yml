@@ -1,0 +1,15 @@
+language: csharp
+
+matrix:
+  include:
+    - dotnet: 3.0.100
+      mono: none
+      env: DOTNETCORE=3
+    - dotnet: 2.2.100
+      mono: none
+      env: DOTNETCORE=2  # optional, can be used to take different code paths in your script
+
+script:
+  - dotnet build -c Release ./Divanov.Prelude/Divanov.Prelude.fsproj
+  - dotnet build -c Release ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
+  - dotnet run --no-build --project ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
