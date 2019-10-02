@@ -12,4 +12,4 @@ matrix:
 script:
   - dotnet build -c Release ./Divanov.Prelude/Divanov.Prelude.fsproj
   - dotnet build -c Release ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
-  - dotnet run --no-build --project ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
+  - dotnet run --project ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
