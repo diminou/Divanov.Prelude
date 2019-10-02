@@ -1,0 +1,12 @@
+language: csharp
+
+matrix:
+  include:
+    - dotnet: 3.0.100
+      mono: none
+      env: DOTNETCORE=3
+
+script:
+  - dotnet build -c Release ./Divanov.Prelude/Divanov.Prelude.fsproj
+  - dotnet build -c Release ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
+  - dotnet run --project ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj

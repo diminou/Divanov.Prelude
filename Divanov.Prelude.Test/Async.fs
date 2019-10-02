@@ -12,7 +12,7 @@ let waitReturn (n: int): Async<int> =
 let async = 
   testList "async" [
     testCase "racing wait times" <| fun () ->
-      let waitTimes = [0 .. 10 .. 50]
+      let waitTimes = [0 .. 50 .. 150]
       let waitAsyncs = List.map waitReturn waitTimes
       let race = Divanov.Prelude.Async.raceMany waitAsyncs
       let result: int = Async.RunSynchronously race
