@@ -15,6 +15,6 @@ deploy:
   skip_cleanup: true
   provider: script
   script:
-    - cd ./Divanov.Prelude/bin/Release && /dotnet nuget push *.nupkg -k $NUGET_PRELUDE -s $NUGET_SOURCE
+    - cd ./Divanov.Prelude/bin/Release && dotnet nuget push *.nupkg -k $NUGET_PRELUDE -s $NUGET_SOURCE
   on:
     branch: master
