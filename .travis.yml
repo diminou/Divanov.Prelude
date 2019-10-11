@@ -10,3 +10,11 @@ script:
   - dotnet build -c Release ./Divanov.Prelude/Divanov.Prelude.fsproj
   - dotnet build -c Release ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
   - dotnet run --project ./Divanov.Prelude.Test/Divanov.Prelude.Test.fsproj
+
+deploy:
+  skip_cleanup: true
+  provider: script
+  script:
+    - dotnet nuget push *.nupkg -k $NUGET_PRELUDE -s $NUGET_SOURCE
+  on:
+    branch: master
