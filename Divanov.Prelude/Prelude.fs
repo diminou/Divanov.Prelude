@@ -38,3 +38,13 @@ module Async =
 
     let raceMany (l: List<Async<'T>>): Async<'T> =
         List.reduce race l
+
+module Map =
+    let update (key: 'a) (f: 'b -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
+        match map.TryFind key with
+        | None -> map
+        | Some v -> map.Add (key, f v)
+
+module List =
+    let mapValues (f: 'a -> 'b) (l: ('k * 'a) list): 'b list =
+        List.map (fun (k, v) -> (k, fv)) l
