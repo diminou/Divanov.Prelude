@@ -45,6 +45,9 @@ module Map =
         | None -> map
         | Some v -> map.Add (key, f v)
 
+    let addRegardless (key: 'a) (upd: 'b option -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
+        map.Add (key, map.TryFind key |> upd)
+
 module List =
-    let mapValues (f: 'a -> 'b) (l: ('k * 'a) list): 'b list =
-        List.map (fun (k, v) -> (k, fv)) l
+    let mapValues (f: 'a -> 'b) (l: ('k * 'a) list): ('k * 'b) list =
+        List.map (fun elt -> (fst elt, snd elt |> f)) l
