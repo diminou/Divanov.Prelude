@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Async.fs" />
-    <Compile Include="Map.fs"/>
+    <Compile Include="Collections.fs"/>
     <Compile Include="Main.fs" />
   </ItemGroup>
 
