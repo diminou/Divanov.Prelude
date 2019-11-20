@@ -1,4 +1,5 @@
 .ionide
+.fake
 **/bin/*
 **/obj/*
 TestResults.xml

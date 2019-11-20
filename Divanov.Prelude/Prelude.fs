@@ -51,3 +51,34 @@ module Map =
 module List =
     let mapValues (f: 'a -> 'b) (l: ('k * 'a) list): ('k * 'b) list =
         List.map (fun elt -> (fst elt, snd elt |> f)) l
+    
+    let tryTail (l: 'a list): 'a list option =
+        if List.isEmpty l then None else Some (List.tail l)
+
+module Array =
+    let tryTail (l: 'a []): 'a [] option =
+        if Array.isEmpty l then None else Some (Array.tail l)
+    
+    let argMin (arr: 't []): int =
+        Array.mapi (fun i e -> (i, e))  arr
+        |> Array.fold
+            (fun (i, m) (ie, elt) ->
+                    if elt < m then (ie, elt) else (i, m)) (0, arr.[0])
+        |> fst
+
+    let argMinN (n: int) (arr: 't []) =
+        let indexed: (int * 't) [] = Array.mapi (fun i e -> (i, e)) arr
+        let buffer = Array.take n indexed
+        let rest = Array.skip n indexed
+        let updateBuffer (i: int, e: 't): unit =
+            if Array.map (fun (k, v) -> e < v) buffer |> Array.fold (||) false
+            then  Array.sortInPlaceBy snd buffer; buffer.[0] <- (i, e)
+        Array.iter updateBuffer rest
+        buffer |> Array.map fst
+
+    let items (ns: int []) (arr: 't []): 't [] =
+        Array.Parallel.map (fun i -> arr.[i]) ns
+
+module Seq =
+    let tryTail (s: 'a seq): 'a seq option =
+        if Seq.isEmpty s then None else Some (Seq.tail s)
