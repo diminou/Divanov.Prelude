@@ -1,6 +1,23 @@
 module Divanov.Prelude
 
 
+module Misc =
+    type SyncRandom(r: System.Random) =
+        member __.Next() =
+            lock r (fun () -> r.Next())
+        member __.NextDouble() =
+            lock r (fun () -> r.NextDouble())
+        member __.NextBytes(b: System.Span<byte>) =
+            System.Threading.Monitor.Enter r
+            try
+                r.NextBytes(b)
+            finally System.Threading.Monitor.Exit r
+    
+    let lockArg (f: 'a -> 'b when 'a: not struct): 'a -> 'b = fun (a: 'a) ->
+        let f2 () = f a
+        lock a f2
+
+
 module Async =
     type Cts = System.Threading.CancellationTokenSource
     type Ct = System.Threading.CancellationToken
