@@ -3,10 +3,15 @@ module Divanov.Prelude
 
 module Misc =
     type SyncRandom(r: System.Random) =
+        let r = r
         member __.Next() =
-            lock r (fun () -> r.Next())
+            System.Threading.Monitor.Enter r
+            try r.Next()
+            finally System.Threading.Monitor.Exit r
         member __.NextDouble() =
-            lock r (fun () -> r.NextDouble())
+            System.Threading.Monitor.Enter r
+            try r.NextDouble()
+            finally System.Threading.Monitor.Exit r
         member __.NextBytes(b: System.Span<byte>) =
             System.Threading.Monitor.Enter r
             try
