@@ -1,6 +1,28 @@
 module Divanov.Prelude
 
 
+module Misc =
+    type SyncRandom(r: System.Random) =
+        let r = r
+        member __.Next() =
+            System.Threading.Monitor.Enter r
+            try r.Next()
+            finally System.Threading.Monitor.Exit r
+        member __.NextDouble() =
+            System.Threading.Monitor.Enter r
+            try r.NextDouble()
+            finally System.Threading.Monitor.Exit r
+        member __.NextBytes(b: byte[]) =
+            System.Threading.Monitor.Enter r
+            try
+                r.NextBytes(b)
+            finally System.Threading.Monitor.Exit r
+    
+    let lockArg (f: 'a -> 'b when 'a: not struct): 'a -> 'b = fun (a: 'a) ->
+        let f2 () = f a
+        lock a f2
+
+
 module Async =
     type Cts = System.Threading.CancellationTokenSource
     type Ct = System.Threading.CancellationToken
@@ -59,22 +81,28 @@ module Array =
     let tryTail (l: 'a []): 'a [] option =
         if Array.isEmpty l then None else Some (Array.tail l)
     
-    let argMin (arr: 't []): int =
-        Array.mapi (fun i e -> (i, e))  arr
+    let argMinBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
+        Array.mapi (fun i e -> Lazy.Create( fun () -> (i, by e))) arr
         |> Array.fold
-            (fun (i, m) (ie, elt) ->
-                    if elt < m then (ie, elt) else (i, m)) (0, arr.[0])
+            (fun (i, m) lz ->
+                    let (ie, elt) = lz.Force()
+                    if elt < m then (ie, elt) else (i, m)) (0, by arr.[0])
         |> fst
 
-    let argMinN (n: int) (arr: 't []) =
-        let indexed: (int * 't) [] = Array.mapi (fun i e -> (i, e)) arr
-        let buffer = Array.take n indexed
+    let argMin (arr: 't [] when 't: comparison) = argMinBy id arr
+
+    let argMinNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
+        let indexed: Lazy<int * 'u> [] = Array.mapi (fun i e -> Lazy.Create (fun () -> (i, by e))) arr
+        let buffer = Array.take n indexed |> Array.map (fun x -> x.Force())
         let rest = Array.skip n indexed
-        let updateBuffer (i: int, e: 't): unit =
+        let updateBuffer (l: Lazy<int * 'u>): unit =
+            let i, e = l.Force()
             if Array.map (fun (k, v) -> e < v) buffer |> Array.fold (||) false
-            then  Array.sortInPlaceBy snd buffer; buffer.[0] <- (i, e)
+            then Array.sortInPlaceBy snd buffer; buffer.[0] <- (i, e)
         Array.iter updateBuffer rest
         buffer |> Array.map fst
+
+    let argMinN (n: int) (arr: 't [] when 't: comparison) = argMinNBy id n arr
 
     let items (ns: int []) (arr: 't []): 't [] =
         Array.Parallel.map (fun i -> arr.[i]) ns
