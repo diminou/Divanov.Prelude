@@ -12,7 +12,7 @@ module Misc =
             System.Threading.Monitor.Enter r
             try r.NextDouble()
             finally System.Threading.Monitor.Exit r
-        member __.NextBytes(b: System.Span<byte>) =
+        member __.NextBytes(b: byte[]) =
             System.Threading.Monitor.Enter r
             try
                 r.NextBytes(b)
