@@ -89,7 +89,17 @@ module Array =
                     if elt < m then (ie, elt) else (i, m)) (0, by arr.[0])
         |> fst
 
+    let argMaxBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
+        Array.mapi (fun i e -> Lazy.Create( fun () -> (i, by e))) arr
+        |> Array.fold
+            (fun (i, m) lz ->
+                    let (ie, elt) = lz.Force()
+                    if elt > m then (ie, elt) else (i, m)) (0, by arr.[0])
+        |> fst
+
     let argMin (arr: 't [] when 't: comparison) = argMinBy id arr
+
+    let argMax (arr: 't []  when 't: comparison) = argMaxBy id arr
 
     let argMinNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
         let indexed: Lazy<int * 'u> [] = Array.mapi (fun i e -> Lazy.Create (fun () -> (i, by e))) arr
@@ -102,7 +112,20 @@ module Array =
         Array.iter updateBuffer rest
         buffer |> Array.map fst
 
+    let argMaxNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
+        let indexed: Lazy<int * 'u> [] = Array.mapi (fun i e -> Lazy.Create (fun () -> (i, by e))) arr
+        let buffer = Array.take n indexed |> Array.map (fun x -> x.Force())
+        let rest = Array.skip n indexed
+        let updateBuffer (l: Lazy<int * 'u>): unit =
+            let i, e = l.Force()
+            if Array.map (fun (k, v) -> e > v) buffer |> Array.fold (||) false
+            then Array.sortInPlaceBy snd buffer; buffer.[Array.length buffer - 1] <- (i, e)
+        Array.iter updateBuffer rest
+        buffer |> Array.map fst |> Array.rev
+
     let argMinN (n: int) (arr: 't [] when 't: comparison) = argMinNBy id n arr
+
+    let argMaxN (n: int) (arr: 't [] when 't: comparison) = argMaxNBy id n arr
 
     let items (ns: int []) (arr: 't []): 't [] =
         Array.Parallel.map (fun i -> arr.[i]) ns

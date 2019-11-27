@@ -43,6 +43,12 @@ let arrayTests =
       let amin = Divanov.Prelude.Array.argMin arr
       Expect.equal arr.[amin] (Array.min arr) "argmin does not point to the location of a minimum"
 
+    testCase "argmax" <| fun () ->
+      let r = System.Random ()
+      let arr = [| 1 .. 22 |] |> Array.map (fun _ -> r.Next ())
+      let amax = Divanov.Prelude.Array.argMax arr
+      Expect.equal arr.[amax] (Array.max arr) "argmax does not point to the location of a maximum"
+
     testCase "items" <| fun () ->
       let arr = [| 1 .. 10 |]
       let indices = [| 4; 2; 8; 6 |]
