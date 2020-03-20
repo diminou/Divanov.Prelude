@@ -8,6 +8,10 @@ module Misc =
             System.Threading.Monitor.Enter r
             try r.Next()
             finally System.Threading.Monitor.Exit r
+        member __.Next(i: int) =
+            System.Threading.Monitor.Enter r
+            try r.Next(i)
+            finally System.Threading.Monitor.Exit r
         member __.NextDouble() =
             System.Threading.Monitor.Enter r
             try r.NextDouble()
@@ -21,7 +25,6 @@ module Misc =
     let lockArg (f: 'a -> 'b when 'a: not struct): 'a -> 'b = fun (a: 'a) ->
         let f2 () = f a
         lock a f2
-
 
 module Async =
     type Cts = System.Threading.CancellationTokenSource
@@ -60,6 +63,41 @@ module Async =
 
     let raceMany (l: List<Async<'T>>): Async<'T> =
         List.reduce race l
+
+    let map (f: 'T -> 'U) (a: Async<'T>): Async<'U> =
+        async {
+            let! b = a
+            return (f b)
+        }
+    
+    let bind (f: 'T -> Async<'U>) (a: Async<'T>): Async<'U> =
+        async {
+            let! b = a
+            return! (f b)
+        }
+
+module Dictionary =
+    open System.Collections.Generic
+    let update (pair: 't * 'u when 't: comparison) (d: Dictionary<'t, 'u>): Dictionary<'t, 'u> =
+        let k, _ = pair
+        d.Remove k |> ignore
+        d.Add pair
+        d
+
+    let addCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
+        if d.ContainsKey element
+        then
+            let count = d.Item element
+            update (element, count + 1) d
+        else
+            d.Add (element, 1)
+            d
+    let removeCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
+        if d.ContainsKey element
+        then
+            let count = d.Item element
+            update (element, count - 1) d
+        else update (element, 1) d
 
 module Map =
     let update (key: 'a) (f: 'b -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
