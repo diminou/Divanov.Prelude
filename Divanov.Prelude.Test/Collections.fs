@@ -1,6 +1,7 @@
 module Divanov.Prelude.Test.Collections
 
 open Expecto
+open Divanov.Prelude
 
 let initialMap = Map<int, float>([(1, 1.0)])
 
@@ -79,4 +80,19 @@ let seqTests =
       let et = Divanov.Prelude.Seq.tryTail empty
       Expect.isSome net "Could not extract tail from a non-empty list"
       Expect.isNone et "extracted a tail from an empty seq"
+  ]
+
+[<Tests>]
+let heapTests =
+  testList "heaps" [
+    testCase "minimum preservation" <| fun _ ->
+      let r = System.Random ()
+      let elements = [ 1 .. 100 ] |> List.map (fun _ -> r.Next())
+      let sorted = List.sort elements |> Seq.ofList
+      let comp: int -> int -> int = compare
+      let h0 = Heap.empty comp
+      let hsorted =
+        elements |> List.fold (fun acc elt -> Heap.push elt acc) h0
+        |> Heap.toSeq
+      Expect.sequenceEqual sorted hsorted "Minimum property is not preserved by the heap"
   ]

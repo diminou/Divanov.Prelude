@@ -2,7 +2,7 @@
 
 <PropertyGroup>
   <PackageId>Divanov.Prelude</PackageId>
-  <Version>0.1.5</Version>
+  <Version>0.1.6</Version>
   <Authors>Dmitry Ivanov</Authors>
   <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 </PropertyGroup>
@@ -20,7 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Extensions.fs" />
     <Compile Include="Prelude.fs" />
+    <Compile Include="Async.fs" />
+    <Compile Include="Collections.fs" />
   </ItemGroup>
 
 </Project>
