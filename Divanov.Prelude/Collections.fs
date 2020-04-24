@@ -3,13 +3,13 @@ namespace Divanov.Prelude
 [<RequireQualifiedAccess>]
 module Dictionary =
     open System.Collections.Generic
-    let update (pair: 't * 'u when 't: comparison) (d: Dictionary<'t, 'u>): Dictionary<'t, 'u> =
+    let inline update (pair: 't * 'u when 't: comparison) (d: Dictionary<'t, 'u>): Dictionary<'t, 'u> =
         let k, _ = pair
         d.Remove k |> ignore
         d.Add pair
         d
 
-    let addCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
+    let inline addCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
         if d.ContainsKey element
         then
             let count = d.Item element
@@ -17,7 +17,7 @@ module Dictionary =
         else
             d.Add (element, 1)
             d
-    let removeCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
+    let inline removeCount (element: 't when 't: comparison) (d: Dictionary<'t, int>): Dictionary<'t, int> =
         if d.ContainsKey element
         then
             let count = d.Item element
@@ -26,17 +26,17 @@ module Dictionary =
 
 [<RequireQualifiedAccess>]
 module Map =
-    let update (key: 'a) (f: 'b -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
+    let inline update (key: 'a) (f: 'b -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
         match map.TryFind key with
         | None -> map
         | Some v -> map.Add (key, f v)
 
-    let addRegardless (key: 'a) (upd: 'b option -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
+    let inline addRegardless (key: 'a) (upd: 'b option -> 'b) (map: Map<'a, 'b>): Map<'a, 'b> =
         map.Add (key, map.TryFind key |> upd)
 
 [<RequireQualifiedAccess>]
 module List =
-    let mapValues (f: 'a -> 'b) (l: ('k * 'a) list): ('k * 'b) list =
+    let inline mapValues (f: 'a -> 'b) (l: ('k * 'a) list): ('k * 'b) list =
         List.map (fun elt -> (fst elt, snd elt |> f)) l
     
     let tryTail (l: 'a list): 'a list option =
@@ -48,7 +48,7 @@ module Array =
     let tryTail (l: 'a []): 'a [] option =
         if Array.isEmpty l then None else Some (Array.tail l)
     
-    let argMinBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
+    let inline argMinBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
         Array.mapi (fun i e -> Lazy.Create( fun () -> (i, by e))) arr
         |> Array.fold
             (fun (i, m) lz ->
@@ -56,7 +56,7 @@ module Array =
                     if elt < m then (ie, elt) else (i, m)) (0, by arr.[0])
         |> fst
 
-    let argMaxBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
+    let inline argMaxBy (by: 't -> 'u when 'u: comparison) (arr: 't []): int =
         Array.mapi (fun i e -> Lazy.Create( fun () -> (i, by e))) arr
         |> Array.fold
             (fun (i, m) lz ->
@@ -64,11 +64,11 @@ module Array =
                     if elt > m then (ie, elt) else (i, m)) (0, by arr.[0])
         |> fst
 
-    let argMin (arr: 't [] when 't: comparison) = argMinBy id arr
+    let inline argMin (arr: 't [] when 't: comparison) = argMinBy id arr
 
-    let argMax (arr: 't []  when 't: comparison) = argMaxBy id arr
+    let inline argMax (arr: 't []  when 't: comparison) = argMaxBy id arr
 
-    let argMinNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
+    let inline argMinNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
         let indexed: Lazy<int * 'u> [] = Array.mapi (fun i e -> Lazy.Create (fun () -> (i, by e))) arr
         let buffer = Array.take n indexed |> Array.map (fun x -> x.Force())
         let rest = Array.skip n indexed
@@ -79,7 +79,7 @@ module Array =
         Array.iter updateBuffer rest
         buffer |> Array.map fst
 
-    let argMaxNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
+    let inline argMaxNBy (by: 't -> 'u when 'u: comparison) (n: int) (arr: 't []) =
         let indexed: Lazy<int * 'u> [] = Array.mapi (fun i e -> Lazy.Create (fun () -> (i, by e))) arr
         let buffer = Array.take n indexed |> Array.map (fun x -> x.Force())
         let rest = Array.skip n indexed
@@ -90,11 +90,11 @@ module Array =
         Array.iter updateBuffer rest
         buffer |> Array.map fst |> Array.rev
 
-    let argMinN (n: int) (arr: 't [] when 't: comparison) = argMinNBy id n arr
+    let inline argMinN (n: int) (arr: 't [] when 't: comparison) = argMinNBy id n arr
 
-    let argMaxN (n: int) (arr: 't [] when 't: comparison) = argMaxNBy id n arr
+    let inline argMaxN (n: int) (arr: 't [] when 't: comparison) = argMaxNBy id n arr
 
-    let items (ns: int []) (arr: 't []): 't [] =
+    let inline items (ns: int []) (arr: 't []): 't [] =
         Array.Parallel.map (fun i -> arr.[i]) ns
 
 [<RequireQualifiedAccess>]
@@ -102,36 +102,35 @@ module Seq =
     let tryTail (s: 'a seq): 'a seq option =
         if Seq.isEmpty s then None else Some (Seq.tail s)
 
-[<RequireQualifiedAccess>]
-module Heap =
+type 't Heap =
+    private {
+                Comparison: 't -> 't -> int
+                Count: int
+                Container: 't []
+            }
 
-    type 't T =
-        private {
-            Comparison: 't -> 't -> int
-            Count: int
-            Container: 't []
-        }
-    
+[<RequireQualifiedAccess>]
+module Heap =    
     let DEFAULTCAP = 64
-    let empty (comparison: 't -> 't -> int): 't T =
+    let empty (comparison: 't -> 't -> int): 't Heap =
         {
             Comparison = comparison
             Count = 0
             Container = Array.replicate DEFAULTCAP Unchecked.defaultof<'t>
         }
 
-    let isEmpty (h: 't T): bool = h.Count <= 0
-    let size (h: 't T): int = h.Count
+    let isEmpty (h: 't Heap): bool = h.Count <= 0
+    let size (h: 't Heap): int = h.Count
 
-    let private maxSize (h: 't T): int = Array.length h.Container
+    let inline private maxSize (h: 't Heap): int = Array.length h.Container
     
-    let private resize (h: 't T): 't T =
+    let private resize (h: 't Heap): 't Heap =
         let newLen = Array.length h.Container * 2
         let newContainer = Array.replicate newLen Unchecked.defaultof<'t>
         Array.blit h.Container 0 newContainer 0 h.Count
         { h with Container = newContainer }
 
-    let private scaleDown (h: 't T): 't T =
+    let private scaleDown (h: 't Heap): 't Heap =
         let newLen = Array.length h.Container / 2
         if newLen >= DEFAULTCAP then
             let newArr = h.Container.[ 0 .. newLen - 1 ]
@@ -142,7 +141,7 @@ module Heap =
     let private right (i: int): int = 2 * i + 2
     let private parent (i: int): int = (i - 1) / 2
 
-    let private add' (element: 't) (heap: 't T): 't T =
+    let private add' (element: 't) (heap: 't Heap): 't Heap =
         if size heap + 1 <= maxSize heap then
             heap.Container.[heap.Count] <- element
             { heap with Count = heap.Count + 1 }
@@ -151,7 +150,7 @@ module Heap =
             newHeap.Container.[newHeap.Count] <- element
             { newHeap with Count = newHeap.Count + 1 }
 
-    let rec private siftUp (index: int) (heap: 't T): unit =
+    let rec private siftUp (index: int) (heap: 't Heap): unit =
         if index <= 0 then ()
         else
             let fc = heap.Comparison
@@ -164,30 +163,30 @@ module Heap =
                 heap.Container.[parentIndex] <- elt
                 siftUp parentIndex heap
 
-    let push (elt: 't) (heap: 't T): 't T =
+    let push (elt: 't) (heap: 't Heap): 't Heap =
         let newHeap' = add' elt heap
         let index = newHeap'.Count - 1
         siftUp index newHeap'
         newHeap'
 
-    let head (heap: 't T): 't =
+    let head (heap: 't Heap): 't =
         match heap.Count with
         | 0 -> invalidArg "heap" "an empty heap has no head"
         | _ -> heap.Container.[0]
 
-    let tryHead (heap: 't T): 't option =
+    let tryHead (heap: 't Heap): 't option =
         match heap.Count with
         | 0 -> None
         | _ -> Some <| head heap
 
-    let private tail' (h: 't T): 't T =
+    let private tail' (h: 't Heap): 't Heap =
         let candidate = h.Container.[h.Count - 1]
         h.Container.[0] <- candidate
         if h.Count - 1 <= maxSize h / 2 && h.Count - 1 > DEFAULTCAP
         then { scaleDown h with Count = h.Count - 1 }
         else { h with Count = h.Count - 1 }
 
-    let rec private siftDown (index: int) (h: 't T): unit =
+    let rec private siftDown (index: int) (h: 't Heap): unit =
         let cf = h.Comparison
         let lft = left index
         let rght = right index
@@ -209,7 +208,7 @@ module Heap =
                 h.Container.[rght] <- elt ; h.Container.[index] <- relt
                 siftDown rght h
 
-    let tail (h: 't T): 't T =
+    let tail (h: 't Heap): 't Heap =
         match h.Count with
         | 0 -> invalidArg "h" "An empty heap has no tail"
         | _ ->
@@ -217,25 +216,26 @@ module Heap =
             siftDown 0 h'
             h'
 
-    let tryTail (h: 't T): 't T option =
+    let tryTail (h: 't Heap): 't Heap option =
         match h.Count with
         | 0 -> None
         | _ -> Some <| tail h
 
-    let toArray (h: 't T): 't [] =
+    let toArray (h: 't Heap): 't [] =
         h.Container.[ 0 .. h.Count - 1 ]
 
-    let rec toSeq (h: 't T): 't seq =
+    let rec toSeq (h: 't Heap): 't seq =
         seq {
             if not (isEmpty h) then yield head h; yield! toSeq(tail h)
         }
 
-    let ofArray (arr: 't [] when 't : comparison): 't T =
+    let heapify (arr: 't []) (comp : 't -> 't -> int) : 't Heap =
         let count = Array.length arr
-        let sorted = Array.sort arr
+        let heap' = { Comparison = comp ; Count = count ; Container = Array.copy arr }
+        let indices = [| 0 .. count - 1|] |> Array.rev
+        Array.iter (fun ind -> siftDown ind heap') indices
+        heap'
+
+    let inline ofArray (arr: 't [] when 't : comparison): 't Heap =
         let comp: 't -> 't -> int = compare
-        {
-            Comparison = comp
-            Count = count
-            Container = sorted
-        }
+        heapify arr comp
