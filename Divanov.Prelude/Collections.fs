@@ -102,6 +102,22 @@ module Seq =
     let tryTail (s: 'a seq): 'a seq option =
         if Seq.isEmpty s then None else Some (Seq.tail s)
 
+    let rec cyclic (s : 'a seq): 'a seq =
+        seq { yield! s ; yield! cyclic s }
+
+    let zipPad (s1 : 'a seq) (s2 : 'b seq) =
+        let maxlen = max (Seq.length s1) (Seq.length s2)
+        let s1' = cyclic s1 |> Seq.truncate maxlen
+        let s2' = cyclic s2 |> Seq.truncate maxlen
+        Seq.zip s1' s2'
+
+    let zipPad3 (s1 : 'a seq) (s2 : 'b seq) (s3: 'c seq) =
+        let maxlen = max (max (Seq.length s1) (Seq.length s2)) (Seq.length s3)
+        let s1' = cyclic s1 |> Seq.truncate maxlen
+        let s2' = cyclic s2 |> Seq.truncate maxlen
+        let s3' = cyclic s3 |> Seq.truncate maxlen
+        Seq.zip3 s1' s2' s3'
+
 type 't Heap =
     private {
                 Comparison: 't -> 't -> int

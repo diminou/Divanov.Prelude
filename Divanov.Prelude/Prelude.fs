@@ -25,4 +25,13 @@ module Misc =
     let lockArg (f: 'a -> 'b when 'a: not struct): 'a -> 'b = fun (a: 'a) ->
         let f2 () = f a
         lock a f2
+
+module Encoding =
+    let FromBase64Web (s : string) =
+        s.Replace('_', '+').Replace('-', '/').Replace('~', '=')
+        |> System.Convert.FromBase64String
+
+    let ToBase64Web (b : byte []) =
+        b |> System.Convert.ToBase64String
+        |> (fun x -> x.Replace('+','_').Replace('/', '-').Replace('=', '~'))
         
