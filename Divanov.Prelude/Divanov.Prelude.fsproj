@@ -2,7 +2,7 @@
 
 <PropertyGroup>
   <PackageId>Divanov.Prelude</PackageId>
-  <Version>0.1.7</Version>
+  <Version>0.1.8</Version>
   <Authors>Dmitry Ivanov</Authors>
   <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 </PropertyGroup>
